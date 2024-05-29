@@ -33,13 +33,6 @@ class CommitData:
 
 
 def get_git_log(git_repo):
-    # log_result = run_git_command(["log", "--pretty=fuller"], cwd=git_repo)
-    # log_lines = stripped(log_result.stdout.decode().splitlines())
-    # return log_lines
-
-    # return list of commits, ordered
-    # each commit should have fields: hash, author, date, message
-
     format_str = "%H;%an;%ad;%s"
     log_result = run_git_command(["log", f"--pretty=format:{format_str}"], cwd=git_repo)
     log_lines = stripped(log_result.stdout.decode().splitlines())

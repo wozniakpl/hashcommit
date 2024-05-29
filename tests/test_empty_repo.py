@@ -1,13 +1,9 @@
-import os
-
 import pytest
 from utils import get_git_log, run_hashcommit
 
 
 @pytest.mark.xfail(reason="Not implemented yet")
 def test_running_inside_an_empty_git_repository(empty_git_repo):
-    assert os.listdir(empty_git_repo) == [".git"]
-
     result = run_hashcommit(
         ["--message", "test", "--hash", "a", "--match-type", "begin"],
         cwd=empty_git_repo,

@@ -1,10 +1,24 @@
 import logging
+import os
 import subprocess
 import sys
-from typing import Optional
+from datetime import datetime
+from typing import Any, Callable, Optional, Tuple
 
 from .args import HashCommitArgs, parse_args
 from .version import VERSION
+
+
+def logged(func: Callable[..., Any]) -> Callable[..., Any]:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        logging.debug(
+            f"Entering {func.__name__} with args: {args} and kwargs: {kwargs}"
+        )
+        result = func(*args, **kwargs)
+        logging.debug(f"Exiting {func.__name__} with result: {result}")
+        return result
+
+    return wrapper
 
 
 def configure_logging(verbosity: int) -> None:
@@ -25,102 +39,143 @@ def configure_logging(verbosity: int) -> None:
 def is_in_git_repo() -> bool:
     return (
         subprocess.run(
-            ["git", "rev-parse", "--is-inside-work-tree"], check=False
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            check=False,
+            stdout=subprocess.PIPE,
         ).returncode
         == 0
     )
 
 
 def does_repo_have_any_commits() -> bool:
-    return (
-        subprocess.run(["git", "rev-list", "--count", "HEAD"], check=False).returncode
-        == 0
-    )
+    logging.debug("Checking if the repository has any commits")
+    try:
+        subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
 
 
-def get_commit_hash(content: str) -> str:
-    # check the hash that the git will produce for a commit with such a content (take into account the commit message, staged files, everything)
-
-    # result = subprocess.run(
-    #     ["git", "hash-object", "-t", "commit", "--stdin"],
-    #     input=content.encode(),
-    #     stdout=subprocess.PIPE,
-    #     check=True,
-    # )
-    # return result.stdout.decode().strip()
-
-    # result = subprocess.run(
-    #     ["git", "hash-object", "-w", "--stdin"],
-    #     input=content.encode(),
-    #     stdout=subprocess.PIPE,
-    #     check=True,
-    # )
-    # return result.stdout.decode().strip()
-    return "a"
+def create_git_env(timestamp: str) -> dict[str, str]:
+    return {
+        **os.environ,
+        "GIT_AUTHOR_DATE": timestamp,
+        "GIT_COMMITTER_DATE": timestamp,
+    }
 
 
-def create_a_commit(author: str, message: str) -> subprocess.CompletedProcess:  # type: ignore
+def create_a_commit(message: str, timestamp: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["git", "commit", "--allow-empty", "-m", message],
-        env={"GIT_AUTHOR_NAME": author},
+        env=create_git_env(timestamp),
         check=True,
     )
 
 
 def create_commit_content(message: Optional[str], number: int) -> str:
     return f"""\
-{message}
+{message or ''}
 
-;;; meta: {number} ;;;
-"""
+--- meta: {number} ---
+""".strip()
 
 
-def get_git_author() -> str:
-    return (
-        subprocess.run(
-            ["git", "config", "user.name"], stdout=subprocess.PIPE, check=True
-        )
-        .stdout.decode()
-        .strip()
+def get_tree_hash() -> str:
+    result = subprocess.run(
+        ["git", "write-tree"],
+        stdout=subprocess.PIPE,
+        check=True,
     )
+    return result.stdout.decode("utf-8").strip()
 
 
-def create_initial_commit_with(
+def get_head_hash() -> Optional[str]:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+        return result.stdout.decode("utf-8").strip()
+    except subprocess.CalledProcessError:
+        return None
+
+
+def get_commit_hash(content: str, timestamp: str) -> str:
+    tree_hash = get_tree_hash()
+    head_hash = get_head_hash()
+    if not head_hash:
+        raise NotImplementedError("Handling empty repositories is not implemented yet")
+    args = ["git", "commit-tree", tree_hash, "-m", content, "-p", head_hash]
+    if will_commits_be_signed():
+        args.append("-S")
+    result = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        env=create_git_env(timestamp),
+        check=True,
+    )
+    return result.stdout.decode("utf-8").strip()
+
+
+def will_commits_be_signed() -> bool:
+    result = subprocess.run(
+        ["git", "config", "commit.gpgSign"],
+        stdout=subprocess.PIPE,
+        check=False,
+    )
+    return result.returncode == 0 and result.stdout.decode("utf-8").strip() == "true"
+
+
+@logged
+def find_commit_content(
+    desired_hash: str, message: Optional[str], match_type: str
+) -> Tuple[str, str]:
+
+    def compare(value: str) -> bool:
+        if match_type == "begin":
+            return value.startswith(desired_hash)
+        elif match_type == "end":
+            return value.endswith(desired_hash)
+        elif match_type == "contain":
+            return desired_hash in value
+        raise ValueError(f"Invalid match type: {match_type}")
+
+    timestamp = datetime.now().astimezone().strftime("%a %b %d %H:%M:%S %Y %z")
+    number = 0
+    while True:
+        number += 1
+        content = create_commit_content(message, number=number)
+        commit_hash = get_commit_hash(content, timestamp)
+
+        if compare(commit_hash):
+            logging.info(
+                f"Found a commit hash that matches the desired hash: {commit_hash}"
+            )
+
+            return content, timestamp
+
+
+def create_a_commit_with_hash(
     desired_hash: str, message: Optional[str], match_type: str
 ) -> None:
-    # def compare(value: str) -> bool:
-    #     if match_type == "begin":
-    #         return desired_hash.startswith(value)
-    #     elif match_type == "end":
-    #         return desired_hash.endswith(value)
-    #     elif match_type == "contain":
-    #         return value in desired_hash
-    #     raise ValueError(f"Invalid match type: {match_type}")
+    logging.debug(
+        f"Creating the initial commit with the desired hash: {desired_hash} ({match_type})"
+    )
 
-    # number = 0
-
-    # while True:
-    #     number += 1
-    #     if message is None:
-    #         raise NotImplementedError(
-    #             "preserving the original commit message is not implemented yet"
-    #         )
-    #     content = f"{message}\n;;; meta: {number} ;;;"
-    #     commit_hash = get_commit_hash(content)
-    #     if compare(commit_hash):
-    #         print(f"Found a commit hash that matches the desired hash: {commit_hash}")
-
-    #         break
-
-    author = get_git_author()
-    content = create_commit_content(message, number=0)
-
-    create_a_commit(author, content)
+    content, timestamp = find_commit_content(desired_hash, message, match_type)
+    create_a_commit(content, timestamp)
 
 
 def main() -> int:
     args: HashCommitArgs = parse_args()
     configure_logging(args.verbose)
+    logging.debug(f"Init: {args}")
 
     if args.version:
         print(f"hashcommit {VERSION}")
@@ -136,14 +191,16 @@ def main() -> int:
 
     try:
         if not does_repo_have_any_commits():
-            create_initial_commit_with(
-                desired_hash=args.hash, message=args.message, match_type=args.match_type
+            raise NotImplementedError(
+                "Handling empty repositories is not implemented yet"
             )
+
+        create_a_commit_with_hash(args.hash, args.message, args.match_type)
     except KeyboardInterrupt:
         print("\nProcess interrupted by user")
         return 3
     except RuntimeError as e:
-        print(e, file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         return 2
 
     return 0
