@@ -94,7 +94,7 @@ tox -e format && tox -e checks && tox -e py311 --
 To set up an environment with `hashcommit` installed and a git repository initialized in the `/repo` directory, use Docker Compose:
 
 ```sh
-docker compose run --rm tests bash
+docker compose run --rm test bash
 ```
 
 ## License
