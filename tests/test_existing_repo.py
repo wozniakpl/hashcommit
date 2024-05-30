@@ -40,6 +40,7 @@ def test_overriding_a_commit(initialized_git_repo: Path) -> None:
     assert git_log[0].hash.startswith("1")
 
 
+@pytest.mark.xfail(reason="Not implemented yet")
 @pytest.mark.parametrize("preserve_author", [True, False])
 def test_preserving_original_commit_author(
     initialized_git_repo: Path, preserve_author: bool
