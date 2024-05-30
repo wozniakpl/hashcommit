@@ -1,0 +1,30 @@
+# Testing environment that has an empty repo under /repo
+
+version: '3.8'
+
+volumes:
+  repo:
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /repo
+    volumes:
+      - repo:/repo
+    environment:
+      - GIT_AUTHOR_NAME="Some User"
+      - GIT_AUTHOR_EMAIL="some@user.com"
+      - GIT_COMMITTER_NAME="Some User"
+      - GIT_COMMITTER_EMAIL="some@user.com"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+  init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - repo:/repo
+    command: sh -c "cd /repo && git init"

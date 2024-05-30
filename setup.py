@@ -1,11 +1,9 @@
 from setuptools import setup, find_packages
-
-with open('VERSION') as version_file:
-    version = version_file.read().strip()
+from hashcommit.version import VERSION
 
 setup(
     name='hashcommit',
-    version=version,
+    version=VERSION,
     packages=find_packages(),
     entry_points={
         'console_scripts': [

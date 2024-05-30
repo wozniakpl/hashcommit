@@ -1,0 +1,9 @@
+.coverage
+.git
+.gitignore
+.mypy_cache
+.tox
+*.egg-info
+
+Dockerfile
+.dockerignore
