@@ -20,10 +20,6 @@ def run_git_command(arguments: List[str], capture_output=True, env=None, cwd=Non
     return result
 
 
-def stripped(arr: List[str]) -> List[str]:
-    return list(map(str.strip, arr))
-
-
 @dataclass
 class CommitData:
     hash: str
@@ -35,6 +31,13 @@ class CommitData:
 def get_git_log(git_repo):
     format_str = "%H;%an;%ad;%s"
     log_result = run_git_command(["log", f"--pretty=format:{format_str}"], cwd=git_repo)
-    log_lines = stripped(log_result.stdout.decode().splitlines())
+    log_lines = list(map(str.strip, log_result.stdout.decode().splitlines()))
 
-    return [CommitData(*line.split(";")) for line in log_lines]
+    output = []
+    for line in log_lines:
+        hash_value, author, date, _ = line.split(";")
+        message = run_git_command(
+            ["log", "-1", "--pretty=format:%B", hash_value], cwd=git_repo
+        ).stdout.decode()
+        output.append(CommitData(hash_value, author, date, message))
+    return output

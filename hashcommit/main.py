@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 from datetime import datetime
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from .args import HashCommitArgs, parse_args
 from .version import VERSION
@@ -61,7 +61,7 @@ def does_repo_have_any_commits() -> bool:
         return False
 
 
-def create_git_env(timestamp: str) -> dict[str, str]:
+def create_git_env(timestamp: str) -> Dict[str, str]:
     return {
         **os.environ,
         "GIT_AUTHOR_DATE": timestamp,
