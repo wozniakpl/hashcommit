@@ -23,6 +23,8 @@ def empty_git_repo(tmp_path):
 @pytest.fixture
 def initialized_git_repo(empty_git_repo):
     """Fixture to create a git repository with an initial commit."""
+    run_git_command(["config", "user.name", "Test User"], cwd=empty_git_repo)
+    run_git_command(["config", "user.email", "test@user.com"], cwd=empty_git_repo)
     result = run_git_command(
         ["commit", "--allow-empty", "-m", "Initial commit"], cwd=empty_git_repo
     )

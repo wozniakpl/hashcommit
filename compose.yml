@@ -13,10 +13,10 @@ services:
     volumes:
       - repo:/repo
     environment:
-      - GIT_AUTHOR_NAME="Test User"
-      - GIT_AUTHOR_EMAIL="test@user.com"
-      - GIT_COMMITTER_NAME="Test User"
-      - GIT_COMMITTER_EMAIL="test@user.com"
+      - GIT_AUTHOR_NAME="Some User"
+      - GIT_AUTHOR_EMAIL="some@user.com"
+      - GIT_COMMITTER_NAME="Some User"
+      - GIT_COMMITTER_EMAIL="some@user.com"
     depends_on:
       init:
         condition: service_completed_successfully
