@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from datetime import datetime, timedelta
 from typing import Callable, Dict, Optional, Tuple
@@ -17,6 +18,7 @@ def create_a_commit(message: str, timestamp: str) -> subprocess.CompletedProcess
     return subprocess.run(
         ["git", "commit", "--allow-empty", "-m", message],
         env=create_git_env(timestamp),
+        stdout=subprocess.PIPE,
         check=True,
     )
 
@@ -46,6 +48,7 @@ def find_commit_content(
         return mapping[match_type]()
 
     timestamp = datetime.now()
+    logging.debug(f"Starting from: {timestamp}")
     while True:
         timestamp -= timedelta(seconds=1)
         timestamp_str = timestamp.astimezone().strftime("%a %b %d %H:%M:%S %Y %z")
@@ -53,14 +56,19 @@ def find_commit_content(
         commit_hash = get_commit_hash(content, timestamp_str, tree_hash, head_hash)
 
         if compare(commit_hash):
+            logging.debug(f"End timestamp: {timestamp}")
+            print(f"Found matching commit hash: {commit_hash}")
             return content, timestamp_str
 
 
 def create_a_commit_with_hash(
     desired_hash: str, message: str, match_type: MatchType
 ) -> None:
+    logging.debug(f"Creating a commit with hash: {desired_hash} ({match_type})")
     head_hash = get_head_hash()
+    logging.debug(f"HEAD: {head_hash}")
     tree_hash = get_tree_hash()
+    logging.debug(f"Tree: {tree_hash}")
     content, timestamp = find_commit_content(
         desired_hash, message, match_type, tree_hash, head_hash
     )
@@ -103,8 +111,11 @@ def overwrite_a_commit_with_hash(
     message: Optional[str],
     match_type: MatchType,
 ) -> None:
+    logging.debug(f"Overwriting a commit with hash: {desired_hash} ({match_type})")
     head_hash = get_parent_head_hash()
+    logging.debug(f"HEAD^: {head_hash}")
     tree_hash = get_tree_hash()
+    logging.debug(f"Tree: {tree_hash}")
     commit_message = message or get_commit_message()
     content, timestamp = find_commit_content(
         desired_hash, commit_message, match_type, tree_hash, head_hash

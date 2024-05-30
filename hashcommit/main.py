@@ -11,7 +11,7 @@ from .version import VERSION
 def main() -> int:
     args: HashCommitArgs = parse_args()
     configure_logging(args.verbose)
-    logging.debug(f"Init: {args}")
+    logging.info(f"Args: {args}")
 
     if args.version:
         print(f"hashcommit {VERSION}")
