@@ -5,9 +5,8 @@ from typing import List
 
 def run_hashcommit(arguments: List[str], env=None, cwd=None):
     """Helper function to run hashcommit with given arguments."""
-    command = "hashcommit"
     result = subprocess.run(
-        [command] + arguments, capture_output=True, env=env, cwd=cwd
+        ["hashcommit"] + arguments, capture_output=True, env=env, cwd=cwd
     )
     return result
 

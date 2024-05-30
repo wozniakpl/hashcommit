@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from utils import run_git_command
 
