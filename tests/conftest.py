@@ -4,12 +4,6 @@ import pytest
 from utils import run_git_command
 
 
-@pytest.fixture(scope="session", autouse=True)
-def set_test_env():
-    """Set environment variable for tests."""
-    os.environ["HASHCOMMIT_TEST"] = "1"
-
-
 @pytest.fixture
 def empty_git_repo(tmp_path):
     """Fixture to create an empty git repository."""
