@@ -3,22 +3,10 @@ import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from .args import HashCommitArgs, parse_args
 from .version import VERSION
-
-
-def logged(func: Callable[..., Any]) -> Callable[..., Any]:
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        logging.debug(
-            f"Entering {func.__name__} with args: {args} and kwargs: {kwargs}"
-        )
-        result = func(*args, **kwargs)
-        logging.debug(f"Exiting {func.__name__} with result: {result}")
-        return result
-
-    return wrapper
 
 
 def configure_logging(verbosity: int) -> None:
@@ -150,7 +138,6 @@ def will_commits_be_signed() -> bool:
     return result.returncode == 0 and result.stdout.decode("utf-8").strip() == "true"
 
 
-@logged
 def find_commit_content(
     desired_hash: str,
     message: str,
@@ -183,9 +170,7 @@ def find_commit_content(
             return content, timestamp_str
 
 
-def create_a_commit_with_hash(
-    desired_hash: str, message: Optional[str], match_type: str
-) -> None:
+def create_a_commit_with_hash(desired_hash: str, message: str, match_type: str) -> None:
     logging.debug(
         f"Creating the initial commit with the desired hash: {desired_hash} ({match_type})"
     )
