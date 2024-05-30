@@ -1,13 +1,20 @@
 import argparse
 import sys
 from argparse import Namespace
+from enum import Enum
 from typing import Optional
+
+
+class MatchType(Enum):
+    BEGIN = "begin"
+    CONTAIN = "contain"
+    END = "end"
 
 
 class HashCommitArgs(Namespace):
     hash: Optional[str]
     message: Optional[str]
-    match_type: str
+    match_type: MatchType
     version: bool
     verbose: int
     overwrite: bool
@@ -25,8 +32,9 @@ def parse_args() -> HashCommitArgs:
     parser.add_argument("--message", help="Commit message.", type=str)
     parser.add_argument(
         "--match-type",
-        choices=["begin", "contain", "end"],
-        default="begin",
+        type=lambda mt: MatchType[mt.upper()],
+        choices=list(MatchType),
+        default=MatchType.BEGIN,
         help="Match type.",
     )
     parser.add_argument(

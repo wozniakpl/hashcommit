@@ -1,7 +1,8 @@
 import subprocess
 from datetime import datetime, timedelta
-from typing import Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
+from .args import MatchType
 from .git import (
     create_git_env,
     get_commit_hash,
@@ -31,19 +32,18 @@ def create_commit_content(message: Optional[str], number: int) -> str:
 def find_commit_content(
     desired_hash: str,
     message: str,
-    match_type: str,
+    match_type: MatchType,
     tree_hash: str,
     head_hash: str,
 ) -> Tuple[str, str]:
 
     def compare(value: str) -> bool:
-        if match_type == "begin":
-            return value.startswith(desired_hash)
-        elif match_type == "end":
-            return value.endswith(desired_hash)
-        elif match_type == "contain":
-            return desired_hash in value
-        raise ValueError(f"Invalid match type: {match_type}")
+        mapping: Dict[MatchType, Callable[[], bool]] = {
+            MatchType.BEGIN: lambda: value.startswith(desired_hash),
+            MatchType.END: lambda: value.endswith(desired_hash),
+            MatchType.CONTAIN: lambda: desired_hash in value,
+        }
+        return mapping[match_type]()
 
     timestamp = datetime.now()
     while True:
@@ -56,7 +56,9 @@ def find_commit_content(
             return content, timestamp_str
 
 
-def create_a_commit_with_hash(desired_hash: str, message: str, match_type: str) -> None:
+def create_a_commit_with_hash(
+    desired_hash: str, message: str, match_type: MatchType
+) -> None:
     head_hash = get_head_hash()
     tree_hash = get_tree_hash()
     content, timestamp = find_commit_content(
@@ -99,7 +101,7 @@ def amend_a_commit(
 def overwrite_a_commit_with_hash(
     desired_hash: str,
     message: Optional[str],
-    match_type: str,
+    match_type: MatchType,
 ) -> None:
     head_hash = get_parent_head_hash()
     tree_hash = get_tree_hash()
