@@ -14,3 +14,4 @@ def test_running_inside_an_empty_git_repository(empty_git_repo: Path) -> None:
     assert len(git_log) == 1
 
     assert git_log[0].hash.startswith("a")
+    assert git_log[0].message == "test\n"

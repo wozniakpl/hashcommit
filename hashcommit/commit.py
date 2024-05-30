@@ -36,7 +36,7 @@ def find_commit_content(
     message: str,
     match_type: MatchType,
     tree_hash: str,
-    head_hash: str,
+    head_hash: Optional[str],
 ) -> Tuple[str, str]:
 
     def compare(value: str) -> bool:
