@@ -25,5 +25,26 @@ def test_specifying_a_message(initialized_git_repo):
     assert len(git_log) == 2
 
     assert git_log[0].message.startswith("test")
-    assert git_log[0].message.endswith("---\n")
     assert git_log[0].hash.startswith("0")
+
+
+def test_overriding_a_commit(initialized_git_repo):
+    result = run_hashcommit(
+        ["--hash", "0", "--message", "test"],
+        cwd=initialized_git_repo,
+    )
+    assert result.returncode == 0
+
+    git_log = get_git_log(initialized_git_repo)
+    assert len(git_log) == 2
+    assert git_log[0].hash.startswith("0")
+
+    result = run_hashcommit(
+        ["--hash", "1", "--override"],
+        cwd=initialized_git_repo,
+    )
+    assert result.returncode == 0
+
+    git_log = get_git_log(initialized_git_repo)
+    assert len(git_log) == 2
+    assert git_log[0].hash.startswith("1")
