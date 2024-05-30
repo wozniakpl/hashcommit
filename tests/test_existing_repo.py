@@ -1,8 +1,10 @@
+from pathlib import Path
+
 import pytest
 from utils import get_git_log, run_git_command, run_hashcommit
 
 
-def test_specifying_a_message(initialized_git_repo):
+def test_specifying_a_message(initialized_git_repo: Path) -> None:
     result = run_hashcommit(
         ["--hash", "0", "--message", "test"],
         cwd=initialized_git_repo,
@@ -16,7 +18,7 @@ def test_specifying_a_message(initialized_git_repo):
     assert git_log[0].hash.startswith("0")
 
 
-def test_overriding_a_commit(initialized_git_repo):
+def test_overriding_a_commit(initialized_git_repo: Path) -> None:
     result = run_hashcommit(
         ["--hash", "0", "--message", "test"],
         cwd=initialized_git_repo,
@@ -39,7 +41,7 @@ def test_overriding_a_commit(initialized_git_repo):
 
 
 @pytest.mark.xfail(reason="Not implemented yet")
-def test_preserving_original_commit_author(initialized_git_repo):
+def test_preserving_original_commit_author(initialized_git_repo: Path) -> None:
     run_git_command(["config", "user.name", "User1"], cwd=initialized_git_repo)
     run_git_command(
         ["config", "user.email", "user1@user.com"], cwd=initialized_git_repo

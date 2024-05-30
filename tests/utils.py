@@ -1,9 +1,12 @@
 import subprocess
 from dataclasses import dataclass
-from typing import List
+from pathlib import Path
+from typing import Dict, List, Optional
 
 
-def run_hashcommit(arguments: List[str], env=None, cwd=None):
+def run_hashcommit(
+    arguments: List[str], env: Optional[Dict] = None, cwd: Optional[Path] = None
+) -> subprocess.CompletedProcess:
     """Helper function to run hashcommit with given arguments."""
     result = subprocess.run(
         ["hashcommit"] + arguments, capture_output=True, env=env, cwd=cwd
@@ -11,7 +14,12 @@ def run_hashcommit(arguments: List[str], env=None, cwd=None):
     return result
 
 
-def run_git_command(arguments: List[str], capture_output=True, env=None, cwd=None):
+def run_git_command(
+    arguments: List[str],
+    capture_output: bool = True,
+    env: Optional[Dict] = None,
+    cwd: Optional[Path] = None,
+) -> subprocess.CompletedProcess:
     """Helper function to run git commands."""
     result = subprocess.run(
         ["git"] + arguments, capture_output=capture_output, env=env, cwd=cwd
@@ -27,7 +35,7 @@ class CommitData:
     message: str
 
 
-def get_git_log(git_repo):
+def get_git_log(git_repo: Path) -> List[CommitData]:
     format_str = "%H;%an;%ad;%s"
     log_result = run_git_command(["log", f"--pretty=format:{format_str}"], cwd=git_repo)
     log_lines = list(map(str.strip, log_result.stdout.decode().splitlines()))

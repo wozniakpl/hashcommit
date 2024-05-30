@@ -1,9 +1,12 @@
+from pathlib import Path
+from typing import Generator
+
 import pytest
 from utils import run_git_command
 
 
 @pytest.fixture
-def empty_git_repo(tmp_path):
+def empty_git_repo(tmp_path: Path) -> Generator[Path, None, None]:
     """Fixture to create an empty git repository."""
     git_repo = tmp_path / "repo"
     git_repo.mkdir()
@@ -13,7 +16,7 @@ def empty_git_repo(tmp_path):
 
 
 @pytest.fixture
-def initialized_git_repo(empty_git_repo):
+def initialized_git_repo(empty_git_repo: Path) -> Generator[Path, None, None]:
     """Fixture to create a git repository with an initial commit."""
     run_git_command(["config", "user.name", "Test User"], cwd=empty_git_repo)
     run_git_command(["config", "user.email", "test@user.com"], cwd=empty_git_repo)
