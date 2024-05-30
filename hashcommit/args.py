@@ -18,6 +18,7 @@ class HashCommitArgs(Namespace):
     version: bool
     verbose: int
     overwrite: bool
+    no_preserve_author: bool
 
 
 def parse_args() -> HashCommitArgs:
@@ -47,5 +48,10 @@ def parse_args() -> HashCommitArgs:
         "--overwrite",
         action="store_true",
         help="Overwrite the existing commit instead of creating a new one.",
+    )
+    parser.add_argument(
+        "--no-preserve-author",
+        action="store_true",
+        help="Do not preserve the original commit author when overwriting.",
     )
     return parser.parse_args(namespace=HashCommitArgs())
