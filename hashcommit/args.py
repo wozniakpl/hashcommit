@@ -10,7 +10,7 @@ class HashCommitArgs(Namespace):
     match_type: str
     version: bool
     verbose: int
-    override: bool
+    overwrite: bool
 
 
 def parse_args() -> HashCommitArgs:
@@ -36,8 +36,8 @@ def parse_args() -> HashCommitArgs:
         "-v", "--verbose", action="count", default=0, help="Increase verbosity level."
     )
     parser.add_argument(
-        "--override",
+        "--overwrite",
         action="store_true",
-        help="Override the existing commit instead of creating a new one.",
+        help="Overwrite the existing commit instead of creating a new one.",
     )
     return parser.parse_args(namespace=HashCommitArgs())

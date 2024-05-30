@@ -10,6 +10,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    working_dir: /repo
     volumes:
       - repo:/repo
     environment:

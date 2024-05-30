@@ -153,7 +153,7 @@ def will_commits_be_signed() -> bool:
 @logged
 def find_commit_content(
     desired_hash: str,
-    message: Optional[str],
+    message: str,
     match_type: str,
     tree_hash: str,
     head_hash: str,
@@ -172,7 +172,7 @@ def find_commit_content(
     while True:
         timestamp -= timedelta(seconds=1)
         timestamp_str = timestamp.astimezone().strftime("%a %b %d %H:%M:%S %Y %z")
-        content = message or "."
+        content = message
         commit_hash = get_commit_hash(content, timestamp_str, tree_hash, head_hash)
 
         if compare(commit_hash):
@@ -231,8 +231,10 @@ def amend_a_commit(
     )
 
 
-def override_a_commit_with_hash(
-    desired_hash: str, message: Optional[str], match_type: str
+def overwrite_a_commit_with_hash(
+    desired_hash: str,
+    message: Optional[str],
+    match_type: str,
 ) -> None:
     logging.debug(
         f"Overriding the existing commit with the desired hash: {desired_hash} ({match_type})"
@@ -240,9 +242,9 @@ def override_a_commit_with_hash(
 
     head_hash = get_parent_head_hash()
     tree_hash = get_tree_hash()
-    message = message or get_commit_message()
+    commit_message = message or get_commit_message()
     content, timestamp = find_commit_content(
-        desired_hash, message, match_type, tree_hash, head_hash
+        desired_hash, commit_message, match_type, tree_hash, head_hash
     )
     amend_a_commit(timestamp, tree_hash, head_hash, content)
 
@@ -270,9 +272,19 @@ def main() -> int:
                 "Handling empty repositories is not implemented yet"
             )
 
-        if args.override:
-            override_a_commit_with_hash(args.hash, args.message, args.match_type)
+        if args.overwrite:
+            overwrite_a_commit_with_hash(
+                args.hash,
+                args.message,
+                args.match_type,
+            )
         else:
+            if not args.message:
+                print(
+                    "Error: --message argument is required if not using --overwrite.",
+                    file=sys.stderr,
+                )
+                return 1
             create_a_commit_with_hash(args.hash, args.message, args.match_type)
     except KeyboardInterrupt:
         print("\nProcess interrupted by user")

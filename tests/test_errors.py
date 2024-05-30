@@ -3,6 +3,17 @@ import os
 from utils import run_hashcommit
 
 
+def test_not_specifying_a_message(initialized_git_repo):
+    result = run_hashcommit(
+        ["--hash", "a", "--match-type", "begin"],
+        cwd=initialized_git_repo,
+    )
+    assert result.returncode == 1
+    assert result.stderr.decode().startswith(
+        "Error: --message argument is required if not using --overwrite."
+    )
+
+
 def test_not_providing_hash_argument(initialized_git_repo):
     result = run_hashcommit(["--message", "test"], cwd=initialized_git_repo)
     assert result.returncode == 1
