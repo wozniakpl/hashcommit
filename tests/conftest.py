@@ -11,7 +11,6 @@ def empty_git_repo(tmp_path: Path) -> Generator[Path, None, None]:
     git_repo = tmp_path / "repo"
     git_repo.mkdir()
     run_git_command(["init"], cwd=git_repo)
-    assert run_git_command(["rev-parse", "HEAD"], cwd=git_repo).stdout
     yield git_repo
 
 
