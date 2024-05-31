@@ -138,3 +138,13 @@ def overwrite_a_commit_with_hash(
         content=content,
         preserve_author=preserve_author,
     )
+
+
+def overwrite_and_rebase(
+    desired_hash: str,
+    message: Optional[str],
+    commit_hash: str,
+    preserve_author: bool,
+    match_type: MatchType,
+) -> None:
+    pass

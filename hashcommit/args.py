@@ -19,6 +19,7 @@ class HashCommitArgs(Namespace):
     verbose: int
     overwrite: bool
     no_preserve_author: bool
+    commit: Optional[str]
 
 
 def parse_args() -> HashCommitArgs:
@@ -53,5 +54,10 @@ def parse_args() -> HashCommitArgs:
         "--no-preserve-author",
         action="store_true",
         help="Do not preserve the original commit author when overwriting.",
+    )
+    parser.add_argument(
+        "--commit",
+        help="Commit hash to overwrite. If not provided, the last commit will be used.",
+        type=str,
     )
     return parser.parse_args(namespace=HashCommitArgs())
