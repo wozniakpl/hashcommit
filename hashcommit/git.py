@@ -23,7 +23,9 @@ def does_repo_have_any_commits() -> bool:
         return False
 
 
-def create_git_env(timestamp: str, preserve_author: bool) -> Dict[str, str]:
+def create_git_env(
+    timestamp: str, preserve_author: bool, related_commit_hash: Optional[str]
+) -> Dict[str, str]:
     env = os.environ.copy()
 
     if preserve_author:
@@ -34,7 +36,10 @@ def create_git_env(timestamp: str, preserve_author: bool) -> Dict[str, str]:
 
         # TODO
         # take from given commit, not last one
-        result = run_subprocess(["git", "show", "-s", "--format=%an|%ae|%cn|%ce"])
+        args = ["git", "show", "-s", "--format=%an|%ae|%cn|%ce"]
+        if related_commit_hash:
+            args.append(related_commit_hash)
+        result = run_subprocess(args)
 
         author_name, author_email, committer_name, committer_email = (
             result.stdout.decode("utf-8").strip().split("|")
@@ -93,11 +98,14 @@ def run_commit_tree(
     timestamp: str,
     head_hash: Optional[str],
     preserve_author: bool,
+    related_commit_hash: Optional[str],
 ) -> str:
     args = ["git", "commit-tree", tree_hash, "-m", content]
     if head_hash:
         args.extend(["-p", head_hash])
     if will_commits_be_signed():
         args.append("-S")
-    result = run_subprocess(args, env=create_git_env(timestamp, preserve_author))
+    result = run_subprocess(
+        args, env=create_git_env(timestamp, preserve_author, related_commit_hash)
+    )
     return result.stdout.decode("utf-8").strip()

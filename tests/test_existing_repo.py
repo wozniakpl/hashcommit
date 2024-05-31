@@ -135,7 +135,6 @@ def test_overwriting_a_commit_from_the_past(
     else:
         assert git_log[1].author == "UserX"
 
-
     assert git_log[2].message.startswith("test0")
     assert git_log[2].hash.startswith("0")
     assert git_log[2].author == "User0"
