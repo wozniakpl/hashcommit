@@ -1,9 +1,11 @@
 from pathlib import Path
 
-from utils import get_git_log, run_hashcommit
+from utils import get_git_log, run_git_command, run_hashcommit
 
 
 def test_running_inside_an_empty_git_repository(empty_git_repo: Path) -> None:
+    run_git_command(["config", "user.name", "Test User"], cwd=empty_git_repo)
+    run_git_command(["config", "user.email", "test@user.com"], cwd=empty_git_repo)
     result = run_hashcommit(
         ["--message", "test", "--hash", "a", "--match-type", "begin"],
         cwd=empty_git_repo,
