@@ -15,12 +15,7 @@ def is_in_git_repo() -> bool:
 
 
 def does_repo_have_any_commits() -> bool:
-    # TODO check if this can be done without exceptions
-    try:
-        run_subprocess(["git", "rev-parse", "HEAD"])
-        return True
-    except subprocess.CalledProcessError:
-        return False
+    return run_subprocess(["git", "rev-parse", "HEAD"], check=False).returncode == 0
 
 
 def create_git_env(
@@ -34,8 +29,6 @@ def create_git_env(
         env.pop("GIT_COMMITTER_NAME", None)
         env.pop("GIT_COMMITTER_EMAIL", None)
 
-        # TODO
-        # take from given commit, not last one
         args = ["git", "show", "-s", "--format=%an|%ae|%cn|%ce"]
         if related_commit_hash:
             args.append(related_commit_hash)
