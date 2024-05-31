@@ -160,7 +160,7 @@ def overwrite_a_commit_with_hash(
     )
 
 
-def get_parent_hash(commit: Optional[str] = None) -> str:
+def get_parent_hash(commit: Optional[str] = None) -> Optional[str]:
     args = ["git", "show", "--no-patch", "--format=%P"]
     if commit:
         args.append(commit)
@@ -169,7 +169,7 @@ def get_parent_hash(commit: Optional[str] = None) -> str:
     parents = result.stdout.decode("utf-8").strip().split()
     if len(parents) > 1:
         raise NotImplementedError("Commit has more than one parent")
-    return parents[0]
+    return parents[0] if parents else None
 
 
 def overwrite_and_rebase(
