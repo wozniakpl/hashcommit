@@ -72,6 +72,8 @@ def find_commit_content(
             logging.debug(f"End timestamp: {timestamp}")
             print(f"Found matching commit hash: {commit_hash}")
             return content, timestamp_str
+        else:
+            pass  # WIP: cleanup
 
 
 def create_a_commit_with_hash(
