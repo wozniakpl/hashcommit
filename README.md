@@ -69,7 +69,11 @@ hashcommit --hash <desired_hash_part> --overwrite --no-preserve-author
 
 ### Overwriting Commits in the Past
 
-Overwriting a particular commit in the past will be implemented in the future.
+You can overwrite the existing commit that has other commits on top of it. To do this, use the `--commit` option:
+
+```sh
+hashcommit --hash <desired_hash_part> --overwrite --commit <commit_hash>
+```
 
 ## Development
 
