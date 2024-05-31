@@ -32,6 +32,7 @@ def main() -> int:
                 args.hash,
                 args.message,
                 args.match_type,
+                not args.no_preserve_author,
             )
         else:
             if not args.message:

@@ -16,7 +16,7 @@ from .git import (
 def create_a_commit(message: str, timestamp: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["git", "commit", "--allow-empty", "-m", message],
-        env=create_git_env(timestamp),
+        env=create_git_env(timestamp, preserve_author=False),
         stdout=subprocess.PIPE,
         check=True,
     )
@@ -36,6 +36,7 @@ def find_commit_content(
     match_type: MatchType,
     tree_hash: str,
     head_hash: Optional[str],
+    preserve_author: bool,
 ) -> Tuple[str, str]:
 
     def compare(value: str) -> bool:
@@ -52,7 +53,9 @@ def find_commit_content(
         timestamp -= timedelta(seconds=1)
         timestamp_str = timestamp.astimezone().strftime("%a %b %d %H:%M:%S %Y %z")
         content = message
-        commit_hash = run_commit_tree(tree_hash, content, timestamp_str, head_hash)
+        commit_hash = run_commit_tree(
+            tree_hash, content, timestamp_str, head_hash, preserve_author
+        )
 
         if compare(commit_hash):
             logging.debug(f"End timestamp: {timestamp}")
@@ -69,7 +72,7 @@ def create_a_commit_with_hash(
     tree_hash = get_tree_hash()
     logging.debug(f"Tree: {tree_hash}")
     content, timestamp = find_commit_content(
-        desired_hash, message, match_type, tree_hash, head_hash
+        desired_hash, message, match_type, tree_hash, head_hash, preserve_author=False
     )
     create_a_commit(content, timestamp)
 
@@ -84,9 +87,15 @@ def get_commit_message() -> str:
 
 
 def amend_a_commit(
-    timestamp: str, tree_hash: str, parent_hash: str, content: str
+    timestamp: str,
+    tree_hash: str,
+    parent_hash: str,
+    content: str,
+    preserve_author: bool,
 ) -> None:
-    new_commit_hash = run_commit_tree(tree_hash, content, timestamp, parent_hash)
+    new_commit_hash = run_commit_tree(
+        tree_hash, content, timestamp, parent_hash, preserve_author
+    )
     subprocess.run(
         ["git", "reset", "--hard", new_commit_hash],
         check=True,
@@ -97,6 +106,7 @@ def overwrite_a_commit_with_hash(
     desired_hash: str,
     message: Optional[str],
     match_type: MatchType,
+    preserve_author: bool,
 ) -> None:
     logging.debug(f"Overwriting a commit with hash: {desired_hash} ({match_type})")
     head_hash = get_parent_head_hash()
@@ -105,6 +115,6 @@ def overwrite_a_commit_with_hash(
     logging.debug(f"Tree: {tree_hash}")
     commit_message = message or get_commit_message()
     content, timestamp = find_commit_content(
-        desired_hash, commit_message, match_type, tree_hash, head_hash
+        desired_hash, commit_message, match_type, tree_hash, head_hash, preserve_author
     )
-    amend_a_commit(timestamp, tree_hash, head_hash, content)
+    amend_a_commit(timestamp, tree_hash, head_hash, content, preserve_author)
