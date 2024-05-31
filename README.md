@@ -14,6 +14,10 @@ You can install the package using pip:
 pip install hashcommit
 ```
 
+## Demo
+
+This repository's history was rewritten using the `rewrite_the_history.sh` script and each new commit is added by using the `hashcommit` command. You can check the result [here](https://github.com/wozniakpl/hashcommit/commits/main/).
+
 ## Usage
 
 ### Creating a New Commit
@@ -74,6 +78,18 @@ You can overwrite the existing commit that has other commits on top of it. To do
 ```sh
 hashcommit --hash <desired_hash_part> --overwrite --commit <commit_hash>
 ```
+
+### Rewriting the History
+
+You can rewrite the history of the current branch using the `rewrite_the_history.sh` script. This script will recreate the commit history, ensuring that each commit's hash conforms to a sequence specified by the `-d` argument, which sets the number of digits for the sequence number.
+
+For example, to rewrite the history with a two-digit sequence number at the beginning:
+
+```sh
+./scripts/rewrite_the_history.sh -d 2
+```
+
+Note: The default value for `-d` is 3. As the number of commits increases, consider adjusting the digit value accordingly to balance performance and the required hash length.
 
 ## Development
 
