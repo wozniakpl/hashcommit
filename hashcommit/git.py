@@ -2,32 +2,25 @@ import os
 import subprocess
 from typing import Dict, Optional
 
+from .utils import run_subprocess
+
 
 def is_in_git_repo() -> bool:
     return (
-        subprocess.run(
-            ["git", "rev-parse", "--is-inside-work-tree"],
-            check=False,
-            stdout=subprocess.PIPE,
+        run_subprocess(
+            ["git", "rev-parse", "--is-inside-work-tree"], check=False
         ).returncode
         == 0
     )
 
 
 def does_repo_have_any_commits() -> bool:
-    try:
-        subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        return True
-    except subprocess.CalledProcessError:
-        return False
+    return run_subprocess(["git", "rev-parse", "HEAD"], check=False).returncode == 0
 
 
-def create_git_env(timestamp: str, preserve_author: bool) -> Dict[str, str]:
+def create_git_env(
+    timestamp: str, preserve_author: bool, related_commit_hash: Optional[str]
+) -> Dict[str, str]:
     env = os.environ.copy()
 
     if preserve_author:
@@ -36,11 +29,11 @@ def create_git_env(timestamp: str, preserve_author: bool) -> Dict[str, str]:
         env.pop("GIT_COMMITTER_NAME", None)
         env.pop("GIT_COMMITTER_EMAIL", None)
 
-        result = subprocess.run(
-            ["git", "show", "-s", "--format=%an|%ae|%cn|%ce"],
-            stdout=subprocess.PIPE,
-            check=True,
-        )
+        args = ["git", "show", "-s", "--format=%an|%ae|%cn|%ce"]
+        if related_commit_hash:
+            args.append(related_commit_hash)
+        result = run_subprocess(args)
+
         author_name, author_email, committer_name, committer_email = (
             result.stdout.decode("utf-8").strip().split("|")
         )
@@ -57,22 +50,20 @@ def create_git_env(timestamp: str, preserve_author: bool) -> Dict[str, str]:
     }
 
 
-def get_tree_hash() -> str:
-    result = subprocess.run(
-        ["git", "write-tree"],
-        stdout=subprocess.PIPE,
-        check=True,
-    )
+def get_tree_hash(commit: Optional[str] = None) -> str:
+    args = ["git", "show", "-s", "--format=%T"]
+    if commit:
+        args.append(commit)
+        result = run_subprocess(args)
+        return result.stdout.decode("utf-8").strip()
+
+    result = run_subprocess(["git", "write-tree"])
     return result.stdout.decode("utf-8").strip()
 
 
 def get_head_hash() -> Optional[str]:
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            stdout=subprocess.PIPE,
-            check=True,
-        )
+        result = run_subprocess(["git", "rev-parse", "HEAD"])
         return result.stdout.decode("utf-8").strip()
     except subprocess.CalledProcessError:
         return None
@@ -80,11 +71,7 @@ def get_head_hash() -> Optional[str]:
 
 def get_parent_head_hash() -> str:
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD^"],
-            stdout=subprocess.PIPE,
-            check=True,
-        )
+        result = run_subprocess(["git", "rev-parse", "HEAD^"])
         value = result.stdout.decode("utf-8").strip()
         if not value:
             raise ValueError("Empty HEAD^ hash")
@@ -94,11 +81,7 @@ def get_parent_head_hash() -> str:
 
 
 def will_commits_be_signed() -> bool:
-    result = subprocess.run(
-        ["git", "config", "commit.gpgSign"],
-        stdout=subprocess.PIPE,
-        check=False,
-    )
+    result = run_subprocess(["git", "config", "commit.gpgSign"], check=False)
     return result.returncode == 0 and result.stdout.decode("utf-8").strip() == "true"
 
 
@@ -108,16 +91,19 @@ def run_commit_tree(
     timestamp: str,
     head_hash: Optional[str],
     preserve_author: bool,
+    related_commit_hash: Optional[str],
 ) -> str:
     args = ["git", "commit-tree", tree_hash, "-m", content]
     if head_hash:
         args.extend(["-p", head_hash])
     if will_commits_be_signed():
         args.append("-S")
-    result = subprocess.run(
+    result = run_subprocess(
         args,
-        stdout=subprocess.PIPE,
-        env=create_git_env(timestamp, preserve_author),
-        check=True,
+        env=create_git_env(
+            timestamp=timestamp,
+            preserve_author=preserve_author,
+            related_commit_hash=related_commit_hash,
+        ),
     )
     return result.stdout.decode("utf-8").strip()

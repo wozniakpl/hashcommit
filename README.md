@@ -69,7 +69,11 @@ hashcommit --hash <desired_hash_part> --overwrite --no-preserve-author
 
 ### Overwriting Commits in the Past
 
-Overwriting a particular commit in the past will be implemented in the future.
+You can overwrite the existing commit that has other commits on top of it. To do this, use the `--commit` option:
+
+```sh
+hashcommit --hash <desired_hash_part> --overwrite --commit <commit_hash>
+```
 
 ## Development
 
@@ -96,13 +100,19 @@ act
 You can use the following command for simplicity of development. It formats the code, runs the checks, and the tests on one Python version:
 
 ```sh
-tox -e format && tox -e checks && tox -e py311 --
+tox -e format && tox -e checks && tox -e py312 --
+```
+
+To run tox tests under docker (not using your git):
+
+```sh
+docker compose up
 ```
 
 To set up an environment with `hashcommit` installed and a git repository initialized in the `/repo` directory, use Docker Compose:
 
 ```sh
-docker compose run --rm test bash
+docker compose run --rm --workdir /repo test bash
 ```
 
 ## License
