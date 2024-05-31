@@ -40,8 +40,10 @@ def test_overriding_a_commit(initialized_git_repo: Path) -> None:
     assert git_log[0].hash.startswith("1")
 
 
-@pytest.mark.xfail(reason="Not implemented yet")
-def test_preserving_original_commit_author(initialized_git_repo: Path) -> None:
+@pytest.mark.parametrize("preserve_author", [True, False])
+def test_preserving_original_commit_author(
+    initialized_git_repo: Path, preserve_author: bool
+) -> None:
     run_git_command(["config", "user.name", "User1"], cwd=initialized_git_repo)
     run_git_command(
         ["config", "user.email", "user1@user.com"], cwd=initialized_git_repo
@@ -63,8 +65,12 @@ def test_preserving_original_commit_author(initialized_git_repo: Path) -> None:
         ["config", "user.email", "user2@user.com"], cwd=initialized_git_repo
     )
 
+    args = ["--hash", "1", "--overwrite"]
+    if not preserve_author:
+        args.append("--no-preserve-author")
+
     result = run_hashcommit(
-        ["--hash", "1", "--overwrite"],
+        args,
         cwd=initialized_git_repo,
     )
     assert result.returncode == 0
@@ -73,4 +79,7 @@ def test_preserving_original_commit_author(initialized_git_repo: Path) -> None:
     assert len(git_log) == 2
     assert git_log[0].hash.startswith("1")
 
-    assert git_log[0].author == "User1"
+    if preserve_author:
+        assert git_log[0].author == "User1"
+    else:
+        assert git_log[0].author == "User2"

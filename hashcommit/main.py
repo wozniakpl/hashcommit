@@ -26,16 +26,13 @@ def main() -> int:
         return 1
 
     try:
-        if not does_repo_have_any_commits():
-            raise NotImplementedError(
-                "Handling empty repositories is not implemented yet"
-            )
 
         if args.overwrite:
             overwrite_a_commit_with_hash(
-                args.hash,
-                args.message,
-                args.match_type,
+                desired_hash=args.hash,
+                message=args.message,
+                match_type=args.match_type,
+                preserve_author=not args.no_preserve_author,
             )
         else:
             if not args.message:
@@ -44,7 +41,18 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 return 1
-            create_a_commit_with_hash(args.hash, args.message, args.match_type)
+            if not does_repo_have_any_commits():
+                if not args.message:
+                    print(
+                        "Error: --message argument is required if the repository is empty.",
+                        file=sys.stderr,
+                    )
+                    return 1
+            create_a_commit_with_hash(
+                desired_hash=args.hash,
+                message=args.message,
+                match_type=args.match_type,
+            )
     except KeyboardInterrupt:
         print("\nProcess interrupted by user")
         return 3
