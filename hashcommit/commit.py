@@ -72,9 +72,14 @@ def create_a_commit_with_hash(
     tree_hash = get_tree_hash()
     logging.debug(f"Tree: {tree_hash}")
     content, timestamp = find_commit_content(
-        desired_hash, message, match_type, tree_hash, head_hash, preserve_author=False
+        desired_hash=desired_hash,
+        message=message,
+        match_type=match_type,
+        tree_hash=tree_hash,
+        head_hash=head_hash,
+        preserve_author=False,
     )
-    create_a_commit(content, timestamp)
+    create_a_commit(message=content, timestamp=timestamp)
 
 
 def get_commit_message() -> str:
@@ -94,7 +99,11 @@ def amend_a_commit(
     preserve_author: bool,
 ) -> None:
     new_commit_hash = run_commit_tree(
-        tree_hash, content, timestamp, parent_hash, preserve_author
+        tree_hash=tree_hash,
+        content=content,
+        timestamp=timestamp,
+        head_hash=parent_hash,
+        preserve_author=preserve_author,
     )
     subprocess.run(
         ["git", "reset", "--hard", new_commit_hash],
@@ -115,6 +124,17 @@ def overwrite_a_commit_with_hash(
     logging.debug(f"Tree: {tree_hash}")
     commit_message = message or get_commit_message()
     content, timestamp = find_commit_content(
-        desired_hash, commit_message, match_type, tree_hash, head_hash, preserve_author
+        desired_hash=desired_hash,
+        message=commit_message,
+        match_type=match_type,
+        tree_hash=tree_hash,
+        head_hash=head_hash,
+        preserve_author=preserve_author,
     )
-    amend_a_commit(timestamp, tree_hash, head_hash, content, preserve_author)
+    amend_a_commit(
+        timestamp=timestamp,
+        tree_hash=tree_hash,
+        parent_hash=head_hash,
+        content=content,
+        preserve_author=preserve_author,
+    )

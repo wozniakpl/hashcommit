@@ -29,10 +29,10 @@ def main() -> int:
 
         if args.overwrite:
             overwrite_a_commit_with_hash(
-                args.hash,
-                args.message,
-                args.match_type,
-                not args.no_preserve_author,
+                desired_hash=args.hash,
+                message=args.message,
+                match_type=args.match_type,
+                preserve_author=not args.no_preserve_author,
             )
         else:
             if not args.message:
@@ -48,7 +48,11 @@ def main() -> int:
                         file=sys.stderr,
                     )
                     return 1
-            create_a_commit_with_hash(args.hash, args.message, args.match_type)
+            create_a_commit_with_hash(
+                desired_hash=args.hash,
+                message=args.message,
+                match_type=args.match_type,
+            )
     except KeyboardInterrupt:
         print("\nProcess interrupted by user")
         return 3
