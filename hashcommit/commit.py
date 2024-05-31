@@ -82,9 +82,12 @@ def create_a_commit_with_hash(
     create_a_commit(message=content, timestamp=timestamp)
 
 
-def get_commit_message() -> str:
+def get_commit_message(commit: Optional[str] = None) -> str:
+    args = ["git", "show", "--no-patch", "--format=%B"]
+    if commit:
+        args.append(commit)
     result = subprocess.run(
-        ["git", "log", "-1", "--pretty=%B"],
+        args,
         stdout=subprocess.PIPE,
         check=True,
     )
@@ -140,6 +143,22 @@ def overwrite_a_commit_with_hash(
     )
 
 
+def get_parent_hash(commit: Optional[str] = None) -> str:
+    args = ["git", "show", "--no-patch", "--format=%P"]
+    if commit:
+        args.append(commit)
+
+    result = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        check=True,
+    )
+    parents = result.stdout.decode("utf-8").strip().split()
+    if len(parents) > 1:
+        raise NotImplementedError("Commit has more than one parent")
+    return parents[0]
+
+
 def overwrite_and_rebase(
     desired_hash: str,
     message: Optional[str],
@@ -147,4 +166,43 @@ def overwrite_and_rebase(
     preserve_author: bool,
     match_type: MatchType,
 ) -> None:
-    pass
+    logging.debug(
+        f"Will overwrite commit {commit_hash} with hash: {desired_hash} ({match_type})"
+    )
+
+    parent_hash = get_parent_hash(commit=commit_hash)
+    logging.debug(f"Parent: {parent_hash}")
+    tree_hash = get_tree_hash(commit=commit_hash)
+    logging.debug(f"Tree: {tree_hash}")
+    commit_message = message or get_commit_message(commit=commit_hash)
+    logging.debug(f"Message: {commit_message}")
+
+    content, timestamp = find_commit_content(
+        desired_hash=desired_hash,
+        message=commit_message,
+        match_type=match_type,
+        tree_hash=tree_hash,
+        head_hash=parent_hash,
+        preserve_author=preserve_author,
+    )
+    logging.debug(f"Content: {content}")
+    logging.debug(f"Timestamp: {timestamp}")
+
+    new_commit_hash = run_commit_tree(
+        tree_hash=tree_hash,
+        content=content,
+        timestamp=timestamp,
+        head_hash=parent_hash,
+        preserve_author=preserve_author,
+    )
+
+    logging.debug(f"Replacing {commit_hash} with {new_commit_hash}")
+    subprocess.run(["git", "replace", commit_hash, new_commit_hash], check=True)
+
+    logging.debug(f"Rebasing onto {new_commit_hash}")
+    subprocess.run(
+        ["git", "rebase", "--onto", new_commit_hash, commit_hash, "HEAD"], check=True
+    )
+
+    logging.debug(f"Deleting {commit_hash} replacement")
+    subprocess.run(["git", "replace", "--delete", commit_hash], check=True)

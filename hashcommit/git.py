@@ -57,7 +57,17 @@ def create_git_env(timestamp: str, preserve_author: bool) -> Dict[str, str]:
     }
 
 
-def get_tree_hash() -> str:
+def get_tree_hash(commit: Optional[str] = None) -> str:
+    args = ["git", "show", "-s", "--format=%T"]
+    if commit:
+        args.append(commit)
+        result = subprocess.run(
+            args,
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+        return result.stdout.decode("utf-8").strip()
+
     result = subprocess.run(
         ["git", "write-tree"],
         stdout=subprocess.PIPE,
@@ -71,6 +81,7 @@ def get_head_hash() -> Optional[str]:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             check=True,
         )
         return result.stdout.decode("utf-8").strip()

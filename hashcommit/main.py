@@ -54,13 +54,12 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 return 1
-            if not does_repo_have_any_commits():
-                if not args.message:
-                    print(
-                        "Error: --message argument is required if the repository is empty.",
-                        file=sys.stderr,
-                    )
-                    return 1
+            if not does_repo_have_any_commits() and not args.message:
+                print(
+                    "Error: --message argument is required if the repository is empty.",
+                    file=sys.stderr,
+                )
+                return 1
             create_a_commit_with_hash(
                 desired_hash=args.hash,
                 message=args.message,
