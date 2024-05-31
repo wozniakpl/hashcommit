@@ -2,7 +2,11 @@ import logging
 import sys
 
 from .args import HashCommitArgs, parse_args
-from .commit import create_a_commit_with_hash, overwrite_a_commit_with_hash
+from .commit import (
+    create_a_commit_with_hash,
+    overwrite_a_commit_with_hash,
+    overwrite_and_rebase,
+)
 from .git import does_repo_have_any_commits, is_in_git_repo
 from .logging import configure_logging
 from .version import VERSION
@@ -28,12 +32,21 @@ def main() -> int:
     try:
 
         if args.overwrite:
-            overwrite_a_commit_with_hash(
-                desired_hash=args.hash,
-                message=args.message,
-                match_type=args.match_type,
-                preserve_author=not args.no_preserve_author,
-            )
+            if args.commit:
+                overwrite_and_rebase(
+                    desired_hash=args.hash,
+                    message=args.message,
+                    commit_hash=args.commit,
+                    preserve_author=not args.no_preserve_author,
+                    match_type=args.match_type,
+                )
+            else:
+                overwrite_a_commit_with_hash(
+                    desired_hash=args.hash,
+                    message=args.message,
+                    match_type=args.match_type,
+                    preserve_author=not args.no_preserve_author,
+                )
         else:
             if not args.message:
                 print(
@@ -41,13 +54,12 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 return 1
-            if not does_repo_have_any_commits():
-                if not args.message:
-                    print(
-                        "Error: --message argument is required if the repository is empty.",
-                        file=sys.stderr,
-                    )
-                    return 1
+            if not does_repo_have_any_commits() and not args.message:
+                print(
+                    "Error: --message argument is required if the repository is empty.",
+                    file=sys.stderr,
+                )
+                return 1
             create_a_commit_with_hash(
                 desired_hash=args.hash,
                 message=args.message,
