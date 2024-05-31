@@ -212,7 +212,7 @@ def overwrite_and_rebase(
     )
 
     logging.debug(f"Replacing {commit_hash} with {new_commit_hash}")
-    subprocess.run(["git", "replace", commit_hash, new_commit_hash], check=True)
+    subprocess.run(["git", "replace", commit_hash, new_commit_hash, "--force"], check=True)
 
     logging.debug(f"Rebasing onto {new_commit_hash}")
     subprocess.run(

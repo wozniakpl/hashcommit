@@ -36,7 +36,7 @@ commits=$(git rev-list --count HEAD)
 
 for i in $(seq -f "$format" 0 $((commits - 1)))
 do
-    hash=$(git rev-list --reverse HEAD | sed -n $((i + 1))p)
+    hash=$(git rev-list --reverse HEAD | sed -n $((10#$i + 1))p)
     command="hashcommit --overwrite --hash $i --commit $hash -vv"
     echo "\$ $command"
     time eval $command
