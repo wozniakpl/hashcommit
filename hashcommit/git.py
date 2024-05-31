@@ -80,8 +80,8 @@ def will_commits_be_signed() -> bool:
     return result.returncode == 0 and result.stdout.decode("utf-8").strip() == "true"
 
 
-def get_commit_hash(
-    content: str, timestamp: str, tree_hash: str, head_hash: Optional[str]
+def run_commit_tree(
+    tree_hash: str, content: str, timestamp: str, head_hash: Optional[str]
 ) -> str:
     args = ["git", "commit-tree", tree_hash, "-m", content]
     if head_hash:

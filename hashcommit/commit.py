@@ -6,11 +6,10 @@ from typing import Callable, Dict, Optional, Tuple
 from .args import MatchType
 from .git import (
     create_git_env,
-    get_commit_hash,
     get_head_hash,
     get_parent_head_hash,
     get_tree_hash,
-    will_commits_be_signed,
+    run_commit_tree,
 )
 
 
@@ -53,7 +52,7 @@ def find_commit_content(
         timestamp -= timedelta(seconds=1)
         timestamp_str = timestamp.astimezone().strftime("%a %b %d %H:%M:%S %Y %z")
         content = message
-        commit_hash = get_commit_hash(content, timestamp_str, tree_hash, head_hash)
+        commit_hash = run_commit_tree(tree_hash, content, timestamp_str, head_hash)
 
         if compare(commit_hash):
             logging.debug(f"End timestamp: {timestamp}")
@@ -87,19 +86,7 @@ def get_commit_message() -> str:
 def amend_a_commit(
     timestamp: str, tree_hash: str, parent_hash: str, content: str
 ) -> None:
-    commit_env = create_git_env(timestamp)
-    args = ["git", "commit-tree", tree_hash, "-m", content, "-p", parent_hash]
-    if will_commits_be_signed():
-        args.append("-S")
-
-    result = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        env=commit_env,
-        check=True,
-    )
-    new_commit_hash = result.stdout.decode("utf-8").strip()
-
+    new_commit_hash = run_commit_tree(tree_hash, content, timestamp, parent_hash)
     subprocess.run(
         ["git", "reset", "--hard", new_commit_hash],
         check=True,
