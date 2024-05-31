@@ -2,6 +2,10 @@
 
 A tool to generate a Git commit with a specific hash part.
 
+## Prerequisites
+
+Ensure you have Git installed on your system.
+
 ## Installation
 
 You can install the package using pip:
@@ -57,7 +61,11 @@ Date:   Thu May 23 17:06:24 2024 +0000
 
 ### Author Preservation
 
-By default, the author is not preserved and gets overwritten when overwriting a commit. This feature will be implemented in the future.
+By default, the author is preserved when overwriting. To overwrite the author, use the `--no-preserve-author` option:
+
+```sh
+hashcommit --hash <desired_hash_part> --overwrite --no-preserve-author
+```
 
 ### Overwriting Commits in the Past
 
