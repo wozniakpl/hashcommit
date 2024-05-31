@@ -11,14 +11,13 @@ from .git import (
     get_tree_hash,
     run_commit_tree,
 )
+from .utils import run_subprocess
 
 
 def create_a_commit(message: str, timestamp: str) -> subprocess.CompletedProcess:
-    return subprocess.run(
+    return run_subprocess(
         ["git", "commit", "--allow-empty", "-m", message],
         env=create_git_env(timestamp, preserve_author=False),
-        stdout=subprocess.PIPE,
-        check=True,
     )
 
 
@@ -86,11 +85,7 @@ def get_commit_message(commit: Optional[str] = None) -> str:
     args = ["git", "show", "--no-patch", "--format=%B"]
     if commit:
         args.append(commit)
-    result = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        check=True,
-    )
+    result = run_subprocess(args)
     return result.stdout.decode("utf-8").strip()
 
 
@@ -148,11 +143,7 @@ def get_parent_hash(commit: Optional[str] = None) -> str:
     if commit:
         args.append(commit)
 
-    result = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        check=True,
-    )
+    result = run_subprocess(args)
     parents = result.stdout.decode("utf-8").strip().split()
     if len(parents) > 1:
         raise NotImplementedError("Commit has more than one parent")
