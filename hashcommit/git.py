@@ -81,7 +81,7 @@ def get_parent_head_hash() -> str:
 
 
 def will_commits_be_signed() -> bool:
-    result = run_subprocess(["git", "config", "commit.gpgSign"])
+    result = run_subprocess(["git", "config", "commit.gpgSign"], check=False)
     return result.returncode == 0 and result.stdout.decode("utf-8").strip() == "true"
 
 

@@ -100,13 +100,19 @@ act
 You can use the following command for simplicity of development. It formats the code, runs the checks, and the tests on one Python version:
 
 ```sh
-tox -e format && tox -e checks && tox -e py311 --
+tox -e format && tox -e checks && tox -e py312 --
+```
+
+To run tox tests under docker (not using your git):
+
+```sh
+docker compose up
 ```
 
 To set up an environment with `hashcommit` installed and a git repository initialized in the `/repo` directory, use Docker Compose:
 
 ```sh
-docker compose run --rm test bash
+docker compose run --rm --workdir /repo test bash
 ```
 
 ## License
