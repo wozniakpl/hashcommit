@@ -11,14 +11,19 @@ from .git import (
     get_tree_hash,
     run_commit_tree,
 )
+from .utils import run_subprocess
 
 
-def create_a_commit(message: str, timestamp: str) -> subprocess.CompletedProcess:
-    return subprocess.run(
+def create_a_commit(
+    message: str, timestamp: str, related_commit_hash: Optional[str]
+) -> subprocess.CompletedProcess:
+    return run_subprocess(
         ["git", "commit", "--allow-empty", "-m", message],
-        env=create_git_env(timestamp, preserve_author=False),
-        stdout=subprocess.PIPE,
-        check=True,
+        env=create_git_env(
+            timestamp=timestamp,
+            preserve_author=False,
+            related_commit_hash=related_commit_hash,
+        ),
     )
 
 
@@ -37,6 +42,7 @@ def find_commit_content(
     tree_hash: str,
     head_hash: Optional[str],
     preserve_author: bool,
+    related_commit_hash: Optional[str],
 ) -> Tuple[str, str]:
 
     def compare(value: str) -> bool:
@@ -54,7 +60,12 @@ def find_commit_content(
         timestamp_str = timestamp.astimezone().strftime("%a %b %d %H:%M:%S %Y %z")
         content = message
         commit_hash = run_commit_tree(
-            tree_hash, content, timestamp_str, head_hash, preserve_author
+            tree_hash,
+            content,
+            timestamp_str,
+            head_hash,
+            preserve_author,
+            related_commit_hash,
         )
 
         if compare(commit_hash):
@@ -78,16 +89,16 @@ def create_a_commit_with_hash(
         tree_hash=tree_hash,
         head_hash=head_hash,
         preserve_author=False,
+        related_commit_hash=None,
     )
-    create_a_commit(message=content, timestamp=timestamp)
+    create_a_commit(message=content, timestamp=timestamp, related_commit_hash=None)
 
 
-def get_commit_message() -> str:
-    result = subprocess.run(
-        ["git", "log", "-1", "--pretty=%B"],
-        stdout=subprocess.PIPE,
-        check=True,
-    )
+def get_commit_message(commit: Optional[str] = None) -> str:
+    args = ["git", "show", "--no-patch", "--format=%B"]
+    if commit:
+        args.append(commit)
+    result = run_subprocess(args)
     return result.stdout.decode("utf-8").strip()
 
 
@@ -97,13 +108,16 @@ def amend_a_commit(
     parent_hash: str,
     content: str,
     preserve_author: bool,
+    related_commit_hash: str,
 ) -> None:
+    """Amend the last commit with new content."""
     new_commit_hash = run_commit_tree(
         tree_hash=tree_hash,
         content=content,
         timestamp=timestamp,
         head_hash=parent_hash,
         preserve_author=preserve_author,
+        related_commit_hash=related_commit_hash,
     )
     subprocess.run(
         ["git", "reset", "--hard", new_commit_hash],
@@ -118,6 +132,10 @@ def overwrite_a_commit_with_hash(
     preserve_author: bool,
 ) -> None:
     logging.debug(f"Overwriting a commit with hash: {desired_hash} ({match_type})")
+    current_hash = get_head_hash()
+    if not current_hash:
+        raise ValueError("No commit to overwrite")
+    logging.debug(f"HEAD: {current_hash}")
     head_hash = get_parent_head_hash()
     logging.debug(f"HEAD^: {head_hash}")
     tree_hash = get_tree_hash()
@@ -130,6 +148,7 @@ def overwrite_a_commit_with_hash(
         tree_hash=tree_hash,
         head_hash=head_hash,
         preserve_author=preserve_author,
+        related_commit_hash=current_hash,
     )
     amend_a_commit(
         timestamp=timestamp,
@@ -137,4 +156,68 @@ def overwrite_a_commit_with_hash(
         parent_hash=head_hash,
         content=content,
         preserve_author=preserve_author,
+        related_commit_hash=current_hash,
     )
+
+
+def get_parent_hash(commit: Optional[str] = None) -> str:
+    args = ["git", "show", "--no-patch", "--format=%P"]
+    if commit:
+        args.append(commit)
+
+    result = run_subprocess(args)
+    parents = result.stdout.decode("utf-8").strip().split()
+    if len(parents) > 1:
+        raise NotImplementedError("Commit has more than one parent")
+    return parents[0]
+
+
+def overwrite_and_rebase(
+    desired_hash: str,
+    message: Optional[str],
+    commit_hash: str,
+    preserve_author: bool,
+    match_type: MatchType,
+) -> None:
+    logging.debug(
+        f"Will overwrite commit {commit_hash} with hash: {desired_hash} ({match_type})"
+    )
+
+    parent_hash = get_parent_hash(commit=commit_hash)
+    logging.debug(f"Parent: {parent_hash}")
+    tree_hash = get_tree_hash(commit=commit_hash)
+    logging.debug(f"Tree: {tree_hash}")
+    commit_message = message or get_commit_message(commit=commit_hash)
+    logging.debug(f"Message: {commit_message}")
+
+    content, timestamp = find_commit_content(
+        desired_hash=desired_hash,
+        message=commit_message,
+        match_type=match_type,
+        tree_hash=tree_hash,
+        head_hash=parent_hash,
+        preserve_author=preserve_author,
+        related_commit_hash=commit_hash,
+    )
+    logging.debug(f"Content: {content}")
+    logging.debug(f"Timestamp: {timestamp}")
+
+    new_commit_hash = run_commit_tree(
+        tree_hash=tree_hash,
+        content=content,
+        timestamp=timestamp,
+        head_hash=parent_hash,
+        preserve_author=preserve_author,
+        related_commit_hash=commit_hash,
+    )
+
+    logging.debug(f"Replacing {commit_hash} with {new_commit_hash}")
+    subprocess.run(["git", "replace", commit_hash, new_commit_hash], check=True)
+
+    logging.debug(f"Rebasing onto {new_commit_hash}")
+    subprocess.run(
+        ["git", "rebase", "--onto", new_commit_hash, commit_hash, "HEAD"], check=True
+    )
+
+    logging.debug(f"Deleting {commit_hash} replacement")
+    subprocess.run(["git", "replace", "--delete", commit_hash], check=True)
