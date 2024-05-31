@@ -138,3 +138,32 @@ def test_overwriting_a_commit_from_the_past(
     assert git_log[2].message.startswith("test0")
     assert git_log[2].hash.startswith("0")
     assert git_log[2].author == "User0"
+
+
+def test_overwriting_a_first_commit(initialized_git_repo: Path) -> None:
+    run_hashcommit_command(
+        ["--hash", "0", "--message", "test0"],
+        cwd=initialized_git_repo,
+    )
+
+    git_log = get_git_log(initialized_git_repo)
+    assert len(git_log) == 2
+
+    assert git_log[0].hash.startswith("0")
+    assert git_log[0].message.startswith("test0")
+
+    assert git_log[1].message.startswith("Initial commit")
+
+    run_hashcommit_command(
+        ["--hash", "1", "--overwrite", "--commit", git_log[1].hash],
+        cwd=initialized_git_repo,
+    )
+
+    git_log = get_git_log(initialized_git_repo)
+    assert len(git_log) == 2
+
+    # hash may change
+    assert git_log[0].message.startswith("test0")
+
+    assert git_log[1].message.startswith("Initial commit")
+    assert git_log[1].hash.startswith("1")
