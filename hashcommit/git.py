@@ -32,7 +32,10 @@ def create_git_env(timestamp: str, preserve_author: bool) -> Dict[str, str]:
         env.pop("GIT_COMMITTER_NAME", None)
         env.pop("GIT_COMMITTER_EMAIL", None)
 
+        # TODO
+        # take from given commit, not last one
         result = run_subprocess(["git", "show", "-s", "--format=%an|%ae|%cn|%ce"])
+
         author_name, author_email, committer_name, committer_email = (
             result.stdout.decode("utf-8").strip().split("|")
         )

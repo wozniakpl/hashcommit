@@ -74,7 +74,10 @@ def test_preserving_original_commit_author(
         assert git_log[0].author == "User2"
 
 
-def test_overwriting_a_commit_from_the_past(initialized_git_repo: Path) -> None:
+@pytest.mark.parametrize("preserve_author", [True, False])
+def test_overwriting_a_commit_from_the_past(
+    initialized_git_repo: Path, preserve_author: bool
+) -> None:
     configure_git(initialized_git_repo, "User0", "user0@user.com")
     run_hashcommit_command(
         ["--hash", "0", "--message", "test0"],
@@ -95,23 +98,44 @@ def test_overwriting_a_commit_from_the_past(initialized_git_repo: Path) -> None:
 
     git_log = get_git_log(initialized_git_repo)
     assert len(git_log) == 4
+
+    assert git_log[0].author == "User2"
     assert git_log[0].message.startswith("test2")
     assert git_log[0].hash.startswith("2")
+
+    assert git_log[1].author == "User1"
     assert git_log[1].message.startswith("test1")
     assert git_log[1].hash.startswith("1")
+
+    assert git_log[2].author == "User0"
     assert git_log[2].message.startswith("test0")
     assert git_log[2].hash.startswith("0")
 
+    configure_git(initialized_git_repo, "UserX", "userx@user.com")
+
+    args = ["--hash", "f", "--overwrite", "--commit", git_log[1].hash]
+    if not preserve_author:
+        args.append("--no-preserve-author")
+
     run_hashcommit_command(
-        ["--hash", "f", "--overwrite", "--commit", git_log[1].hash],
+        args,
         cwd=initialized_git_repo,
     )
 
     git_log = get_git_log(initialized_git_repo)
     assert len(git_log) == 4
+
     assert git_log[0].message.startswith("test2")
-    # hash of test2 will have changed
+    assert git_log[0].author == "User2"
+
     assert git_log[1].message.startswith("test1")
     assert git_log[1].hash.startswith("f")
+    if preserve_author:
+        assert git_log[1].author == "User1"
+    else:
+        assert git_log[1].author == "UserX"
+
+
     assert git_log[2].message.startswith("test0")
     assert git_log[2].hash.startswith("0")
+    assert git_log[2].author == "User0"
