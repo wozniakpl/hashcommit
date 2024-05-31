@@ -23,6 +23,15 @@ def create_git_env(
 ) -> Dict[str, str]:
     env = os.environ.copy()
 
+    if does_repo_have_any_commits():
+        args = ["git", "show", "-s", "--format=%ad"]
+        if related_commit_hash:
+            args.append(related_commit_hash)
+        result = run_subprocess(args)
+        author_date = result.stdout.decode("utf-8").strip()
+    else:
+        author_date = timestamp
+
     if preserve_author:
         env.pop("GIT_AUTHOR_NAME", None)
         env.pop("GIT_AUTHOR_EMAIL", None)
@@ -45,7 +54,7 @@ def create_git_env(
 
     return {
         **env,
-        "GIT_AUTHOR_DATE": timestamp,
+        "GIT_AUTHOR_DATE": author_date,
         "GIT_COMMITTER_DATE": timestamp,
     }
 
