@@ -20,7 +20,9 @@ def create_a_commit(
     return run_subprocess(
         ["git", "commit", "--allow-empty", "-m", message],
         env=create_git_env(
-            timestamp, preserve_author=False, related_commit_hash=related_commit_hash
+            timestamp=timestamp,
+            preserve_author=False,
+            related_commit_hash=related_commit_hash,
         ),
     )
 

@@ -106,6 +106,11 @@ def run_commit_tree(
     if will_commits_be_signed():
         args.append("-S")
     result = run_subprocess(
-        args, env=create_git_env(timestamp, preserve_author, related_commit_hash)
+        args,
+        env=create_git_env(
+            timestamp=timestamp,
+            preserve_author=preserve_author,
+            related_commit_hash=related_commit_hash,
+        ),
     )
     return result.stdout.decode("utf-8").strip()
