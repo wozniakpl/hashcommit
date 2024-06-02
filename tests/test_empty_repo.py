@@ -16,3 +16,17 @@ def test_running_inside_an_empty_git_repository(empty_git_repo: Path) -> None:
 
     assert git_log[0].hash.startswith("a")
     assert git_log[0].message == "test\n"
+
+
+def test_overwriting_the_only_commit(empty_git_repo: Path) -> None:
+    configure_git(empty_git_repo, "Test User", "test@user.com")
+    result = run_hashcommit_command(
+        ["--message", "foo", "--hash", "a"],
+        cwd=empty_git_repo,
+    )
+    assert not result.stderr, result.stderr
+
+    result = run_hashcommit_command(
+        ["--message", "bar", "--hash", "b", "--overwrite"],
+        cwd=empty_git_repo,
+    )

@@ -9,6 +9,7 @@ from .commit import (
 )
 from .git import does_repo_have_any_commits, is_in_git_repo
 from .logging import configure_logging
+from .utils import run_subprocess
 from .version import VERSION
 
 
@@ -71,6 +72,9 @@ def main() -> int:
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2
+    finally:
+        logging.info("Running git garbage collection")
+        run_subprocess(["git", "gc", "--prune=now"])
 
     return 0
 
