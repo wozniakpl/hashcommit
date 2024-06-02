@@ -18,6 +18,10 @@ def does_repo_have_any_commits() -> bool:
     return run_subprocess(["git", "rev-parse", "HEAD"], check=False).returncode == 0
 
 
+def extract_stdout(result: subprocess.CompletedProcess) -> str:
+    return str(result.stdout.decode().strip())
+
+
 def create_git_env(
     timestamp: str, preserve_author: bool, related_commit_hash: Optional[str]
 ) -> Dict[str, str]:
@@ -28,7 +32,7 @@ def create_git_env(
         if related_commit_hash:
             args.append(related_commit_hash)
         result = run_subprocess(args)
-        author_date = result.stdout.decode("utf-8").strip()
+        author_date = extract_stdout(result)
     else:
         author_date = timestamp
 
@@ -43,9 +47,9 @@ def create_git_env(
             args.append(related_commit_hash)
         result = run_subprocess(args)
 
-        author_name, author_email, committer_name, committer_email = (
-            result.stdout.decode("utf-8").strip().split("|")
-        )
+        author_name, author_email, committer_name, committer_email = extract_stdout(
+            result
+        ).split("|")
 
         env["GIT_AUTHOR_NAME"] = author_name
         env["GIT_AUTHOR_EMAIL"] = author_email
@@ -64,16 +68,16 @@ def get_tree_hash(commit: Optional[str] = None) -> str:
     if commit:
         args.append(commit)
         result = run_subprocess(args)
-        return result.stdout.decode("utf-8").strip()
+        return extract_stdout(result)
 
     result = run_subprocess(["git", "write-tree"])
-    return result.stdout.decode("utf-8").strip()
+    return extract_stdout(result)
 
 
 def get_head_hash() -> Optional[str]:
     try:
         result = run_subprocess(["git", "rev-parse", "HEAD"])
-        return result.stdout.decode("utf-8").strip()
+        return extract_stdout(result)
     except subprocess.CalledProcessError:
         return None
 
@@ -81,7 +85,7 @@ def get_head_hash() -> Optional[str]:
 def get_parent_head_hash() -> Optional[str]:
     try:
         result = run_subprocess(["git", "rev-parse", "HEAD^"])
-        value = result.stdout.decode("utf-8").strip()
+        value = extract_stdout(result)
         if not value:
             raise ValueError("Empty HEAD^ hash")
         return value
@@ -91,7 +95,7 @@ def get_parent_head_hash() -> Optional[str]:
 
 def will_commits_be_signed() -> bool:
     result = run_subprocess(["git", "config", "commit.gpgSign"], check=False)
-    return result.returncode == 0 and result.stdout.decode("utf-8").strip() == "true"
+    return result.returncode == 0 and extract_stdout(result) == "true"
 
 
 def run_commit_tree(
@@ -115,4 +119,4 @@ def run_commit_tree(
             related_commit_hash=related_commit_hash,
         ),
     )
-    return result.stdout.decode("utf-8").strip()
+    return extract_stdout(result)

@@ -1,9 +1,10 @@
 from pathlib import Path
+from typing import List
 
 from utils import configure_git, run_git_command, run_hashcommit_command
 
 
-def get_unreachable_commits(repo: Path) -> list[str]:
+def get_unreachable_commits(repo: Path) -> List[str]:
     result = run_git_command(["fsck", "--unreachable"], cwd=repo)
     return [
         line.split()[2]

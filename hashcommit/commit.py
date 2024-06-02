@@ -6,6 +6,7 @@ from typing import Callable, Dict, Optional, Tuple
 from .args import MatchType
 from .git import (
     create_git_env,
+    extract_stdout,
     get_head_hash,
     get_parent_head_hash,
     get_tree_hash,
@@ -99,7 +100,7 @@ def get_commit_message(commit: Optional[str] = None) -> str:
     if commit:
         args.append(commit)
     result = run_subprocess(args)
-    return result.stdout.decode("utf-8").strip()
+    return extract_stdout(result)
 
 
 def amend_a_commit(
