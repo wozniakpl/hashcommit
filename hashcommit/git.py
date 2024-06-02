@@ -78,7 +78,7 @@ def get_head_hash() -> Optional[str]:
         return None
 
 
-def get_parent_head_hash() -> str:
+def get_parent_head_hash() -> Optional[str]:
     try:
         result = run_subprocess(["git", "rev-parse", "HEAD^"])
         value = result.stdout.decode("utf-8").strip()
@@ -86,7 +86,8 @@ def get_parent_head_hash() -> str:
             raise ValueError("Empty HEAD^ hash")
         return value
     except subprocess.CalledProcessError:
-        raise ValueError("Failed to get HEAD^ hash")
+        # raise ValueError("Failed to get HEAD^ hash")
+        return None
 
 
 def will_commits_be_signed() -> bool:
