@@ -86,7 +86,6 @@ def get_parent_head_hash() -> Optional[str]:
             raise ValueError("Empty HEAD^ hash")
         return value
     except subprocess.CalledProcessError:
-        # raise ValueError("Failed to get HEAD^ hash")
         return None
 
 
