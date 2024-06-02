@@ -1,4 +1,5 @@
 import logging
+import re
 import subprocess
 from datetime import datetime, timedelta
 from typing import Callable, Dict, Optional, Tuple
@@ -52,6 +53,12 @@ def find_commit_content(
             MatchType.END: lambda: value.endswith(desired_hash),
             MatchType.CONTAIN: lambda: desired_hash in value,
         }
+        if match_type == MatchType.REGEX:
+            try:
+                regex_pattern: re.Pattern[str] = re.compile(desired_hash)
+                mapping[match_type] = lambda: regex_pattern.search(value) is not None
+            except re.error as e:
+                raise ValueError(f"Invalid regular expression pattern: {e}")
         return mapping[match_type]()
 
     timestamp = datetime.now()

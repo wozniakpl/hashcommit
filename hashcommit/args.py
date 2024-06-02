@@ -9,6 +9,7 @@ class MatchType(Enum):
     BEGIN = "begin"
     CONTAIN = "contain"
     END = "end"
+    REGEX = "regex"
 
 
 class HashCommitArgs(Namespace):
@@ -26,10 +27,6 @@ def parse_args() -> HashCommitArgs:
     parser = argparse.ArgumentParser(
         description="Generate a Git commit with a specific hash prefix."
     )
-    if len(sys.argv) == 1:
-        parser.print_help(sys.stderr)
-        sys.exit(0)
-
     parser.add_argument("--hash", help="Desired hash string.", type=str)
     parser.add_argument("--message", help="Commit message.", type=str)
     parser.add_argument(
@@ -37,7 +34,7 @@ def parse_args() -> HashCommitArgs:
         type=lambda mt: MatchType[mt.upper()],
         choices=list(MatchType),
         default=MatchType.BEGIN,
-        help="Match type.",
+        help="Match type for the hash (begin, contain, end, regex). If 'regex', the --hash argument is treated as a regular expression.",
     )
     parser.add_argument(
         "--version", action="store_true", help="Show the version of hashcommit."
@@ -60,4 +57,7 @@ def parse_args() -> HashCommitArgs:
         help="Commit hash to overwrite. If not provided, the last commit will be used.",
         type=str,
     )
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stdout)
+        sys.exit(0)
     return parser.parse_args(namespace=HashCommitArgs())

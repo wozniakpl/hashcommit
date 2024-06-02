@@ -1,16 +1,29 @@
+from typing import List
+
+import pytest
 from utils import run_hashcommit_command
 
 from hashcommit.version import VERSION
 
 
-def test_no_arguments() -> None:
-    result = run_hashcommit_command([])
-    assert result.stderr.decode().startswith("usage: hashcommit")
-
-
-def test_help() -> None:
-    result = run_hashcommit_command(["--help"])
-    assert result.stdout.decode().startswith("usage: hashcommit")
+@pytest.mark.parametrize("args", [[], ["--help"]])
+def test_help(args: List[str]) -> None:
+    result = run_hashcommit_command(args)
+    output = result.stdout.decode()
+    assert output.startswith("usage: hashcommit")
+    options = [
+        "--help",
+        "--message",
+        "--hash",
+        "--match-type",
+        "--overwrite",
+        "--commit",
+        "--no-preserve-author",
+        "--verbose",
+        "--version",
+    ]
+    for option in options:
+        assert option in output, f"Option {option} not found in output"
 
 
 def test_version() -> None:

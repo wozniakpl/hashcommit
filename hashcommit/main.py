@@ -69,7 +69,7 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\nProcess interrupted by user")
         return 3
-    except RuntimeError as e:
+    except (RuntimeError, ValueError) as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2
     finally:

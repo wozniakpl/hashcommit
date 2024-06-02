@@ -38,10 +38,10 @@ hashcommit --hash <desired_hash_part> --message "<commit_message>" --overwrite
 
 ### Match Type
 
-You can also specify if the hash must begin with, contain, or end with the desired string using the `--match-type` option. The default is to match the beginning of the hash:
+You can also specify if the hash must begin with, contain, or end with the desired string using the `--match-type` option. Regex matching is also supported. The default is to match the beginning of the hash:
 
 ```sh
-hashcommit --hash <desired_hash_part> --message "<commit_message>" --match-type <begin|contain|end>
+hashcommit --hash <desired_hash_part> --message "<commit_message>" --match-type <begin|contain|end|regex>
 ```
 
 ### Example Usage
